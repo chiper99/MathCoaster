@@ -1,13 +1,35 @@
 /**
- * API client - prepared for future backend integration.
- * No real API calls in MVP; exports fetch wrappers.
+ * API client - fetch wrappers with error handling.
  */
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api'
+  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5260/api'
+
+async function handleResponse<T>(res: Response): Promise<T> {
+  const text = await res.text()
+  let body: unknown
+  try {
+    body = text ? JSON.parse(text) : null
+  } catch {
+    body = null
+  }
+
+  if (!res.ok) {
+    let message = (body as { message?: string })?.message
+    if (!message && body && typeof body === 'object') {
+      const err = body as Record<string, string[]>
+      const first = Object.values(err).flat().find(Boolean)
+      if (first) message = first
+    }
+    const fallback = `Request failed (${res.status})`
+    throw new Error(message ?? (typeof body === 'string' ? body : text || fallback))
+  }
+
+  return body as T
+}
 
 export function apiGet<T = unknown>(path: string): Promise<T> {
-  return fetch(`${API_BASE_URL}${path}`).then((res) => res.json())
+  return fetch(`${API_BASE_URL}${path}`).then(handleResponse<T>)
 }
 
 export function apiPost<T = unknown>(
@@ -18,5 +40,5 @@ export function apiPost<T = unknown>(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-  }).then((res) => res.json())
+  }).then(handleResponse<T>)
 }

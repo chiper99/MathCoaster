@@ -1,16 +1,7 @@
 import { useState, useEffect } from 'react'
 import { LEVELS, type Level } from '../data/levels'
 import { getLeaderboard, type LeaderboardEntry } from '../api/leaderboard'
-
-function formatTime(ms: number): string {
-  const s = Math.floor(ms / 1000)
-  const m = Math.floor(s / 60)
-  const sec = s % 60
-  const frac = ms % 1000
-  return `${m.toString().padStart(2, '0')}:${sec
-    .toString()
-    .padStart(2, '0')}.${frac.toString().padStart(3, '0')}`
-}
+import { formatTime } from '../utils/formatTime'
 
 interface MenuPageProps {
   onPlayLevel: (level: Level | null) => void
@@ -90,7 +81,7 @@ export function MenuPage({ onPlayLevel }: MenuPageProps) {
               </thead>
               <tbody>
                 {leaderboard.map((e, i) => (
-                  <tr key={`${e.playerName}-${e.createdAt}-${i}`}>
+                  <tr key={e.id ?? `${e.playerName}-${e.createdAt}-${i}`}>
                     <td>{i + 1}</td>
                     <td>{e.playerName}</td>
                     <td>{formatTime(e.timeMs)}</td>

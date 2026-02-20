@@ -25,5 +25,6 @@ RUN dotnet publish "./MathCoasterApi.csproj" -c $BUILD_CONFIGURATION -o /app/pub
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
+RUN mkdir -p /app/data
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "MathCoasterApi.dll"]

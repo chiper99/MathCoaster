@@ -471,6 +471,12 @@ h1 {
   cursor: not-allowed;
 }
 
+.modal-error {
+  margin: 0;
+  color: #e57373;
+  font-size: 0.9rem;
+}
+
 .modal-submitted {
   margin: 0 0 1rem;
   color: #4caf50;

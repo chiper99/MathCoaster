@@ -7,8 +7,9 @@ desktop.ini
 .vscode/
 .idea/
 
-# Visual Studio
+# Visual Studio / .NET
 .vs/
+obj/
 *.suo
 *.user
 *.userosscache

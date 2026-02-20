@@ -5,16 +5,7 @@ import {
   computePreliminaryPlace,
   type LeaderboardEntry,
 } from '../api/leaderboard'
-
-function formatTime(ms: number): string {
-  const totalSec = ms / 1000
-  const m = Math.floor(totalSec / 60)
-  const s = Math.floor(totalSec % 60)
-  const frac = Math.floor((ms % 1000) / 1)
-  return `${m.toString().padStart(2, '0')}:${s
-    .toString()
-    .padStart(2, '0')}.${frac.toString().padStart(3, '0')}`
-}
+import { formatTime } from '../utils/formatTime'
 
 interface FinishModalProps {
   levelId: number
@@ -35,6 +26,7 @@ export function FinishModal({
   const [loading, setLoading] = useState(true)
   const [playerName, setPlayerName] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     getLeaderboard(levelId).then((list) => {
@@ -48,12 +40,18 @@ export function FinishModal({
 
   const handleSubmit = async () => {
     if (!playerName.trim()) return
+    setErrorMessage(null)
     setLoading(true)
-    await submitScore(levelId, playerName.trim(), timeMs)
-    const updated = await getLeaderboard(levelId)
-    setEntries(updated)
-    setSubmitted(true)
-    setLoading(false)
+    try {
+      await submitScore(levelId, playerName.trim(), timeMs)
+      const updated = await getLeaderboard(levelId)
+      setEntries(updated)
+      setSubmitted(true)
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to submit score')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -81,7 +79,7 @@ export function FinishModal({
               </thead>
               <tbody>
                 {entries.map((e, i) => (
-                  <tr key={`${e.playerName}-${e.createdAt}-${i}`}>
+                  <tr key={e.id ?? `${e.playerName}-${e.createdAt}-${i}`}>
                     <td>{i + 1}</td>
                     <td>{e.playerName}</td>
                     <td>{formatTime(e.timeMs)}</td>
@@ -107,6 +105,11 @@ export function FinishModal({
               className="modal-name-input"
               maxLength={32}
             />
+            {errorMessage && (
+              <p className="modal-error" role="alert">
+                {errorMessage}
+              </p>
+            )}
             <button
               type="button"
               className="modal-btn-submit"

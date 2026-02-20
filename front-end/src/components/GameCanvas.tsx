@@ -9,6 +9,7 @@ import {
 import { createRailBody } from '../engine/railGenerator'
 import { drawBodies } from '../engine/renderPhysics'
 import { compileExpression } from '../utils/mathParser'
+import { formatTime } from '../utils/formatTime'
 import { createCoordinateTransform } from '../engine/coordinateTransform'
 import type { Level } from '../data/levels'
 
@@ -43,7 +44,6 @@ interface GameCanvasProps {
   spawnY?: number
   onSpawnChange?: (x: number, y: number) => void
   onLevelComplete?: (timeMs: number) => void
-  onSimulationStart?: () => void
   onSimulationStateChange?: (running: boolean) => void
   onOutOfBounds?: () => void
   restartRef?: React.MutableRefObject<(() => void) | null>
@@ -58,7 +58,6 @@ export function GameCanvas({
   spawnY: spawnYProp,
   onSpawnChange,
   onLevelComplete,
-  onSimulationStart,
   onSimulationStateChange,
   onOutOfBounds,
   restartRef,
@@ -144,7 +143,10 @@ export function GameCanvas({
     const physics = physicsRef.current
     stopSimulation()
 
-    if (!railBodyRef.current) return
+    if (!railBodyRef.current) {
+      console.warn('Please wait for the rail to be built')
+      return
+    }
 
     const ball = createBall(
       physics.world,
@@ -161,8 +163,7 @@ export function GameCanvas({
     setVisitedZones(new Set())
     setElapsedMs(0)
     setIsRunning(true)
-    onSimulationStart?.()
-  }, [expression, randomBallColor, stopSimulation, level, onSimulationStart, effectiveSpawnX, effectiveSpawnY])
+  }, [expression, randomBallColor, stopSimulation, level, effectiveSpawnX, effectiveSpawnY])
 
   // Resize main canvas for sharp physics rendering on high-DPI
   useLayoutEffect(() => {
@@ -468,16 +469,6 @@ export function GameCanvas({
     return () => cancelAnimationFrame(frameId)
   }, [isRunning])
 
-  const formatTimer = (ms: number) => {
-    const s = Math.floor(ms / 1000)
-    const m = Math.floor(s / 60)
-    const sec = s % 60
-    const frac = ms % 1000
-    return `${m.toString().padStart(2, '0')}:${sec
-      .toString()
-      .padStart(2, '0')}.${frac.toString().padStart(3, '0')}`
-  }
-
   const handleRestart = useCallback(() => {
     stopSimulation()
     buildAndRun()
@@ -528,7 +519,7 @@ export function GameCanvas({
       >
         {isRunning && (
           <div className="game-timer" aria-live="polite">
-            {formatTimer(elapsedMs)}
+            {formatTime(elapsedMs)}
           </div>
         )}
         <canvas
